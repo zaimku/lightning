@@ -31,6 +31,18 @@ Hentikan miner:
 bash stop.sh
 ```
 
+Untuk meminta batas daya 85% dari daya default GPU, hentikan sesi lama lalu mulai:
+
+```bash
+bash stop.sh
+GPU_POWER_LIMIT=85% bash run.sh 86400
+```
+
+Ini membatasi daya, bukan jumlah core atau utilisasi. GPU bisa tetap melaporkan
+utilisasi 100%; tidak menjamin 15% idle. Opsi memerlukan izin driver dan mungkin
+ditolak di Studio. Periksa batas daya aktual melalui `bash status.sh` dan log.
+Tanpa `GPU_POWER_LIMIT`, skrip tidak meminta perubahan batas daya.
+
 `run.sh` menjalankan workload di background, menunggu GPU aktif, dan baru
 menyatakan sukses setelah menemukan accepted share atau timeout verifikasi.
 

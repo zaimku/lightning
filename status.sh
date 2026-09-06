@@ -31,6 +31,9 @@ if command -v nvidia-smi >/dev/null 2>&1; then
     echo "GPU_STATUS"
     nvidia-smi --query-gpu=index,name,utilization.gpu,power.draw,memory.used,temperature.gpu \
         --format=csv,noheader 2>&1 || true
+    echo "GPU_POWER_LIMITS (index, name, default W, configured W, enforced W)"
+    nvidia-smi --query-gpu=index,name,power.default_limit,power.limit,enforced.power.limit \
+        --format=csv,noheader 2>&1 || true
 fi
 
 log_file=""

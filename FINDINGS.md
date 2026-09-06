@@ -39,6 +39,22 @@ sesuai permintaan pengguna.
 
 ## Yang belum diverifikasi langsung
 
+### Pembaruan batas daya opsional
+
+- `GPU_POWER_LIMIT=85%` meneruskan `--gpu-power 85%` ke miner. Kosong secara
+  default sehingga pengguna harus mengaktifkannya saat memulai sesi baru.
+- Dokumentasi resmi CLI PeakMiner mencantumkan batas daya persen default,
+  tetapi tidak mencantumkan batas utilisasi/core. Ini tidak menyediakan 15% idle.
+- Karena paket masih mem-pin 2.14.0, dukungan flag diperiksa lewat `--help`
+  binary aktual sebelum digunakan; versi miner tidak dinaikkan oleh perubahan ini.
+- Status menampilkan permintaan serta power default/configured/enforced.
+  Izin driver dapat menyebabkan permintaan gagal meskipun miner masih aktif.
+- Verifikasi lokal: sintaks empat skrip dan penolakan input batas daya yang
+  salah. Penerapan power limit dan pengaruhnya pada H100 belum diuji langsung.
+- Sumber: <https://github.com/peakminer/peakminer#cli-reference>.
+
+### Keterbatasan uji platform
+
 - Tidak ada akun, Studio ID, atau GPU Lightning yang diberikan pada sesi ini.
 - Skrip belum dijalankan pada mesin Lightning nyata.
 - Jenis GPU, image Linux, versi driver, latency pool, hashrate, power, dan biaya
@@ -56,4 +72,3 @@ sesuai permintaan pengguna.
 7. Tunggu accepted share serta pastikan rejected tidak bertambah berulang.
 8. Tutup browser sebentar dan pastikan proses tetap hidup.
 9. Jalankan `stop.sh`, lalu pastikan Studio sleep/stop dan pemakaian GPU berhenti.
-

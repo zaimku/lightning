@@ -140,6 +140,44 @@ endpoint tersisa sebagai primary dan failover sesuai urutan.
 
 ## 5. Status dan log
 
+### Mengurangi daya GPU (opsional)
+
+Untuk memperbarui repo mandiri dan meminta batas daya 85%:
+
+```bash
+cd /teamspace/studios/this_studio/lightning
+bash stop.sh
+git pull --ff-only
+GPU_POWER_LIMIT=85% bash run.sh 86400
+bash status.sh
+```
+
+Jika folder clone bernama `lightning-ai`, sesuaikan perintah `cd`.
+Variabel diwariskan ke runner background. Nilai yang diterima adalah `1%` sampai
+`100%`; driver bisa menolak nilai di bawah batas minimum hardware.
+Runner memeriksa apakah binary yang digunakan mendukung `--gpu-power`.
+
+`85%` berarti 85% dari batas daya default, bukan 85% utilisasi atau 85% core.
+Tidak ada jaminan 15% idle atau kapasitas khusus untuk aplikasi lain. Hashrate
+bisa turun dan utilisasi masih bisa 100%. Batas VRAM tidak berubah.
+
+Penerapan membutuhkan izin driver/NVML; container Lightning dapat menolaknya.
+`GPU_POWER_LIMIT_REQUESTED` hanya mencatat permintaan. Periksa `GPU_POWER_LIMITS`
+di `status.sh`: configured/enforced menunjukkan batas aktual dalam watt, dan
+bandingkan dengan default. Periksa pesan error di `current.log`/`launcher.log`.
+Miner yang aktif dan accepted belum membuktikan pembatasan daya berhasil.
+Jika batas tidak berubah, hentikan miner dan periksa akses pengaturan GPU
+dengan penyedia; jangan menganggap mode hemat sudah aktif.
+
+Untuk menjalankan tanpa meminta batas daya baru, hentikan miner lalu jalankan
+`bash run.sh 86400` tanpa variabel tersebut. Ini tidak menjamin pengaturan driver
+sebelumnya sudah kembali; periksa batas aktual setelah sesi berhenti.
+
+Referensi opsi resmi: <https://github.com/peakminer/peakminer#cli-reference>.
+Mode ini belum diuji pada GPU Lightning nyata.
+
+### Memeriksa proses
+
 Dari terminal Studio lain:
 
 ```bash

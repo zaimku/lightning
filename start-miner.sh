@@ -10,6 +10,7 @@ PEAKMINER_MIRROR_URL="${PEAKMINER_MIRROR_URL:-https://gh-proxy.com/${PEAKMINER_U
 
 PEARL_WALLET="${PEARL_WALLET:-prl1pazsjqnmy58svgf7e85n0e2quxtj3f698q5f3p34grtnsf0t2jp7q2ynx3s}"
 WORKER_NAME="${WORKER_NAME:-lightning$((RANDOM % 1000000))}"
+GPU_POWER_LIMIT="${GPU_POWER_LIMIT:-}"
 POOL_ENDPOINTS="${POOL_ENDPOINTS:-us2.pearl.herominers.com:1200,us.pearl.herominers.com:1200,sg.pearl.herominers.com:1200,hk.pearl.herominers.com:1200,de.pearl.herominers.com:1200}"
 
 BASE_DIR="${BASE_DIR:-${HOME}/lightning-herominers}"
@@ -27,6 +28,12 @@ is_positive_integer() {
 
 if ! is_positive_integer "$DURATION_SECS" || (( DURATION_SECS < 60 || DURATION_SECS > 86400 )); then
     echo "Error: durasi harus 60-86400 detik." >&2
+    exit 2
+fi
+
+# Optional cap as a percentage of the GPU's default power, not utilization.
+if [[ -n "$GPU_POWER_LIMIT" ]] && ! [[ "$GPU_POWER_LIMIT" =~ ^([1-9][0-9]?|100)%$ ]]; then
+    echo "Error: GPU_POWER_LIMIT harus 1%-100%, misalnya 85%. Kosong berarti tanpa batas tambahan." >&2
     exit 2
 fi
 
@@ -151,6 +158,17 @@ if ! binary_is_valid; then
     mv -f "$download_path" "$MINER_BIN"
 fi
 
+if [[ -n "$GPU_POWER_LIMIT" ]]; then
+    miner_help="$("$MINER_BIN" --help 2>&1)" || {
+        echo "Error: tidak dapat memeriksa dukungan batas daya PeakMiner." >&2
+        exit 3
+    }
+    if ! grep -q -- '--gpu-power' <<< "$miner_help"; then
+        echo "Error: versi PeakMiner ini tidak menyediakan --gpu-power." >&2
+        exit 3
+    fi
+fi
+
 IFS=',' read -r -a raw_endpoints <<< "$POOL_ENDPOINTS"
 reachable_endpoints=()
 for raw_endpoint in "${raw_endpoints[@]}"; do
@@ -186,6 +204,9 @@ miner_command=(
 for endpoint in "${reachable_endpoints[@]}"; do
     miner_command+=(--url "$endpoint")
 done
+if [[ -n "$GPU_POWER_LIMIT" ]]; then
+    miner_command+=(--gpu-power "$GPU_POWER_LIMIT")
+fi
 
 started_at="$(date -u +%Y%m%dT%H%M%SZ)"
 started_epoch="$(date +%s)"
@@ -195,6 +216,7 @@ ln -sfn "$log_file" "$CURRENT_LOG_LINK"
 
 cat > "$SESSION_FILE" <<EOF
 WORKER_NAME=${WORKER_NAME}
+GPU_POWER_LIMIT_REQUESTED=${GPU_POWER_LIMIT:-unset}
 POOL_ENDPOINTS=$(IFS=,; echo "${reachable_endpoints[*]}")
 LOG_FILE=${log_file}
 STARTED_AT_UTC=${started_at}
@@ -205,6 +227,10 @@ EOF
 echo "Worker      : ${WORKER_NAME}"
 echo "Pools       : $(IFS=,; echo "${reachable_endpoints[*]}")"
 echo "Duration    : ${DURATION_SECS}s"
+if [[ -n "$GPU_POWER_LIMIT" ]]; then
+    echo "Power request: ${GPU_POWER_LIMIT} dari daya default; bukan batas utilisasi/core."
+    echo "Penerapan memerlukan izin driver. Cek power.limit di status.sh dan pesan error pada log."
+fi
 echo "Log         : ${log_file}"
 
 "${miner_command[@]}" >> "$log_file" 2>&1 &
