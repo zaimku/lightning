@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.log
+*.pid
+*.part
+current-session.env
+lightning-herominers/
+bin/
+logs/
