@@ -111,10 +111,17 @@ background dan Studio yang sedang menjalankan workload tidak dianggap idle.
 
 ## 4. Durasi dan konfigurasi custom
 
-Durasi harus 60 sampai 86.400 detik. Contoh enam jam:
+Durasi dapat berupa `0` untuk tanpa timer, atau 60 sampai 86.400 detik. Contoh
+enam jam:
 
 ```bash
 bash run.sh 21600
+```
+
+Tanpa timer internal (berjalan sampai dihentikan manual atau Studio berhenti):
+
+```bash
+bash run.sh 0 lightning01
 ```
 
 Wallet custom hanya untuk command tersebut:

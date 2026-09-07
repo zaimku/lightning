@@ -4,7 +4,7 @@ set -Eeuo pipefail
 
 readonly REPO_RAW_URL="https://raw.githubusercontent.com/zaimku/lightning/main"
 INSTALL_DIR="${INSTALL_DIR:-/workspace/lightning}"
-DURATION_SECS="${DURATION_SECS:-21600}"
+DURATION_SECS="${DURATION_SECS:-0}"
 WORKER_NAME="${WORKER_NAME:-nosana4090}"
 
 command -v bash >/dev/null 2>&1 || {

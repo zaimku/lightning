@@ -17,7 +17,7 @@
       "type": "container/run",
       "args": {
         "image": "docker.io/nosana/pytorch-jupyter:2.0.0",
-        "cmd": "python3 -c 'import urllib.request; urllib.request.urlretrieve(\"https://raw.githubusercontent.com/zaimku/lightning/main/start-miner.sh\", \"/tmp/start-miner.sh\")' && exec bash /tmp/start-miner.sh 86400",
+        "cmd": "python3 -c 'import urllib.request; urllib.request.urlretrieve(\"https://raw.githubusercontent.com/zaimku/lightning/main/start-miner.sh\", \"/tmp/start-miner.sh\")' && exec bash /tmp/start-miner.sh 0",
         "gpu": true
       }
     }

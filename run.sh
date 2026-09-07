@@ -8,8 +8,9 @@ LAUNCHER_PID_FILE="${BASE_DIR}/launcher.pid"
 DURATION_SECS="${1:-86400}"
 WORKER_OVERRIDE="${2:-${WORKER_NAME:-}}"
 
-if ! [[ "$DURATION_SECS" =~ ^[1-9][0-9]*$ ]] || (( DURATION_SECS < 60 || DURATION_SECS > 86400 )); then
-    echo "Usage: bash run.sh [duration_secs 60-86400] [worker_name]" >&2
+if ! [[ "$DURATION_SECS" =~ ^(0|[1-9][0-9]*)$ ]] ||
+    (( DURATION_SECS != 0 && (DURATION_SECS < 60 || DURATION_SECS > 86400) )); then
+    echo "Usage: bash run.sh [duration_secs: 0 atau 60-86400] [worker_name]" >&2
     exit 2
 fi
 
@@ -32,7 +33,11 @@ launcher_pid=$!
 printf '%s\n' "$launcher_pid" > "$LAUNCHER_PID_FILE"
 
 echo "Launcher PID : ${launcher_pid}"
-echo "Duration     : ${DURATION_SECS}s"
+if (( DURATION_SECS == 0 )); then
+    echo "Duration     : tanpa batas (sampai dihentikan/container berhenti)"
+else
+    echo "Duration     : ${DURATION_SECS}s"
+fi
 echo "Menunggu miner aktif dan accepted share..."
 
 last_status=""
@@ -72,4 +77,3 @@ fi
 tail -n 120 "$LAUNCHER_LOG" 2>/dev/null || true
 echo "Error: miner tidak aktif setelah 180 detik." >&2
 exit 6
-

@@ -10,10 +10,11 @@ perintah berikut:
 python3 -c 'import urllib.request; urllib.request.urlretrieve("https://raw.githubusercontent.com/zaimku/lightning/main/nosana-start.sh", "/tmp/nosana-start.sh")' && bash /tmp/nosana-start.sh
 ```
 
-Nilai `21600` adalah enam jam. Nosana tetap dapat menghentikan container tepat
-saat lease mencapai timeout. Perintah `run.sh` menjalankan miner di background,
-menunggu sampai accepted share, lalu mengembalikan prompt terminal. Jupyter dan
-deployment harus tetap hidup.
+Bootstrap memakai durasi `0`, artinya miner tidak memiliki timer internal dan
+terus berjalan sampai dihentikan manual atau container dihentikan Nosana.
+Perintah `run.sh` menjalankan miner di background, menunggu sampai accepted
+share, lalu mengembalikan prompt terminal. Jupyter dan deployment harus tetap
+hidup.
 
 Bootstrap memakai `python3` bawaan image dan tidak membutuhkan `git` atau
 `curl`. Jika `curl` tersedia pada image lain, skrip tetap dapat memakainya.
@@ -55,6 +56,10 @@ Revision ini tidak menjalankan Jupyter dan tidak mengekspos port 8888. Container
 langsung mengambil skrip dari GitHub lalu menjalankan PeakMiner di foreground. Variabel
 `LOG_TO_STDOUT=1` menyalin log miner ke log job Nosana sehingga event
 `connected`, `new job`, `accepted`, dan `rejected` terlihat di dashboard.
+
+Nilai durasi runner pada revision adalah `0` (tanpa timer internal). Timeout enam
+jam tetap merupakan batas milik Nosana. Strategy `INFINITE` harus membuat job
+pengganti agar mining berlanjut setelah container lama dihentikan platform.
 
 Tanda sehat:
 

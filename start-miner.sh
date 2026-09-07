@@ -23,12 +23,9 @@ LAUNCHER_PID_FILE="${BASE_DIR}/launcher.pid"
 SESSION_FILE="${BASE_DIR}/current-session.env"
 CURRENT_LOG_LINK="${BASE_DIR}/current.log"
 
-is_positive_integer() {
-    [[ "$1" =~ ^[1-9][0-9]*$ ]]
-}
-
-if ! is_positive_integer "$DURATION_SECS" || (( DURATION_SECS < 60 || DURATION_SECS > 86400 )); then
-    echo "Error: durasi harus 60-86400 detik." >&2
+if ! [[ "$DURATION_SECS" =~ ^(0|[1-9][0-9]*)$ ]] ||
+    (( DURATION_SECS != 0 && (DURATION_SECS < 60 || DURATION_SECS > 86400) )); then
+    echo "Error: durasi harus 0 (tanpa batas) atau 60-86400 detik." >&2
     exit 2
 fi
 
@@ -259,7 +256,11 @@ fi
 
 started_at="$(date -u +%Y%m%dT%H%M%SZ)"
 started_epoch="$(date +%s)"
-ends_epoch="$((started_epoch + DURATION_SECS))"
+if (( DURATION_SECS == 0 )); then
+    ends_epoch=0
+else
+    ends_epoch="$((started_epoch + DURATION_SECS))"
+fi
 log_file="${LOG_DIR}/${WORKER_NAME}-${started_at}.log"
 ln -sfn "$log_file" "$CURRENT_LOG_LINK"
 
@@ -275,7 +276,11 @@ EOF
 
 echo "Worker      : ${WORKER_NAME}"
 echo "Pools       : $(IFS=,; echo "${reachable_endpoints[*]}")"
-echo "Duration    : ${DURATION_SECS}s"
+if (( DURATION_SECS == 0 )); then
+    echo "Duration    : tanpa batas (sampai dihentikan/container berhenti)"
+else
+    echo "Duration    : ${DURATION_SECS}s"
+fi
 if [[ -n "$GPU_POWER_LIMIT" ]]; then
     echo "Power request: ${GPU_POWER_LIMIT} dari daya default; bukan batas utilisasi/core."
     echo "Penerapan memerlukan izin driver. Cek power.limit di status.sh dan pesan error pada log."
@@ -315,7 +320,7 @@ trap terminate_miner TERM INT
 trap cleanup_state EXIT
 
 while kill -0 "$miner_pid" 2>/dev/null; do
-    if (( $(date +%s) >= ends_epoch )); then
+    if (( ends_epoch != 0 && $(date +%s) >= ends_epoch )); then
         echo "Durasi selesai; menghentikan miner."
         terminate_miner
         break

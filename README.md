@@ -49,6 +49,8 @@ Tanpa `GPU_POWER_LIMIT`, skrip tidak meminta perubahan batas daya.
 
 `run.sh` menjalankan workload di background, menunggu GPU aktif, dan baru
 menyatakan sukses setelah menemukan accepted share atau timeout verifikasi.
+Gunakan `bash run.sh 0 NAMA_WORKER` untuk berjalan tanpa timer internal sampai
+miner dihentikan atau mesin/container provider berhenti.
 
 Repo tujuan paket ini adalah `https://github.com/zaimku/lightning`.
 Jenis GPU dipilih sendiri di Studio; skrip hanya mendeteksi GPU yang aktif.
