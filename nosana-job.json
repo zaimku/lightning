@@ -1,0 +1,31 @@
+{
+  "version": "0.1",
+  "type": "container",
+  "global": {
+    "gpu": true,
+    "env": {
+      "PEARL_WALLET": "prl1pazsjqnmy58svgf7e85n0e2quxtj3f698q5f3p34grtnsf0t2jp7q2ynx3s",
+      "WORKER_NAME": "nosana4090",
+      "POOL_ENDPOINTS": "us2.pearl.herominers.com:1200,us.pearl.herominers.com:1200,sg.pearl.herominers.com:1200,hk.pearl.herominers.com:1200,de.pearl.herominers.com:1200",
+      "BASE_DIR": "/workspace/nosana-herominers",
+      "LOG_TO_STDOUT": "1"
+    }
+  },
+  "ops": [
+    {
+      "id": "pearl-miner",
+      "type": "container/run",
+      "args": {
+        "image": "docker.io/nosana/pytorch-jupyter:2.0.0",
+        "cmd": "curl -fsSL https://raw.githubusercontent.com/zaimku/lightning/main/start-miner.sh -o /tmp/start-miner.sh && exec bash /tmp/start-miner.sh 86400",
+        "gpu": true
+      }
+    }
+  ],
+  "meta": {
+    "trigger": "dashboard",
+    "system_requirements": {
+      "required_vram": 20
+    }
+  }
+}

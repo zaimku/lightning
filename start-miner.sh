@@ -11,6 +11,7 @@ PEAKMINER_MIRROR_URL="${PEAKMINER_MIRROR_URL:-https://gh-proxy.com/${PEAKMINER_U
 PEARL_WALLET="${PEARL_WALLET:-prl1pazsjqnmy58svgf7e85n0e2quxtj3f698q5f3p34grtnsf0t2jp7q2ynx3s}"
 WORKER_NAME="${WORKER_NAME:-lightning$((RANDOM % 1000000))}"
 GPU_POWER_LIMIT="${GPU_POWER_LIMIT:-}"
+LOG_TO_STDOUT="${LOG_TO_STDOUT:-0}"
 POOL_ENDPOINTS="${POOL_ENDPOINTS:-us2.pearl.herominers.com:1200,us.pearl.herominers.com:1200,sg.pearl.herominers.com:1200,hk.pearl.herominers.com:1200,de.pearl.herominers.com:1200}"
 
 BASE_DIR="${BASE_DIR:-${HOME}/lightning-herominers}"
@@ -37,6 +38,11 @@ if [[ -n "$GPU_POWER_LIMIT" ]] && ! [[ "$GPU_POWER_LIMIT" =~ ^([1-9][0-9]?|100)%
     exit 2
 fi
 
+if [[ "$LOG_TO_STDOUT" != 0 && "$LOG_TO_STDOUT" != 1 ]]; then
+    echo "Error: LOG_TO_STDOUT harus 0 atau 1." >&2
+    exit 2
+fi
+
 if ! [[ "$PEARL_WALLET" =~ ^prl1[a-z0-9]{20,100}$ ]]; then
     echo "Error: wallet Pearl tidak valid." >&2
     exit 2
@@ -58,6 +64,10 @@ for required_command in nvidia-smi curl sha256sum grep timeout pgrep; do
         exit 3
     fi
 done
+if [[ "$LOG_TO_STDOUT" == 1 ]] && ! command -v tee >/dev/null 2>&1; then
+    echo "Error: command 'tee' diperlukan saat LOG_TO_STDOUT=1." >&2
+    exit 3
+fi
 
 mkdir -p "$BASE_DIR" "$BIN_DIR" "$LOG_DIR"
 
@@ -233,7 +243,11 @@ if [[ -n "$GPU_POWER_LIMIT" ]]; then
 fi
 echo "Log         : ${log_file}"
 
-"${miner_command[@]}" >> "$log_file" 2>&1 &
+if [[ "$LOG_TO_STDOUT" == 1 ]]; then
+    "${miner_command[@]}" > >(tee -a "$log_file") 2>&1 &
+else
+    "${miner_command[@]}" >> "$log_file" 2>&1 &
+fi
 miner_pid=$!
 printf '%s\n' "$miner_pid" > "$PID_FILE"
 
