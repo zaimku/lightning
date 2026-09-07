@@ -1,7 +1,8 @@
 # Lightning AI Studio ke HeroMiners
 
 Untuk Nosana, lihat [panduan Nosana](./NOSANA.md) dan
-[`nosana-job.json`](./nosana-job.json).
+[`nosana-job.json`](./nosana-job.json). Untuk container Jupyter Nosana yang
+sudah aktif, gunakan bootstrap [`nosana-start.sh`](./nosana-start.sh).
 
 Paket ini menjalankan PeakMiner untuk Pearl/PRL langsung dari terminal Lightning
 AI Studio. Paket tidak membuat Studio, memilih GPU, memakai kredit, atau mengubah

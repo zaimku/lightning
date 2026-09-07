@@ -7,13 +7,16 @@ terminal. Buka endpoint, pilih **File > New > Terminal**, lalu jalankan satu
 perintah berikut:
 
 ```bash
-cd /workspace && if [ -d lightning/.git ]; then git -C lightning pull --ff-only; else git clone https://github.com/zaimku/lightning.git lightning; fi && cd lightning && chmod +x ./*.sh && bash run.sh 21600 nosana4090
+curl -fsSL https://raw.githubusercontent.com/zaimku/lightning/main/nosana-start.sh -o /tmp/nosana-start.sh && bash /tmp/nosana-start.sh
 ```
 
 Nilai `21600` adalah enam jam. Nosana tetap dapat menghentikan container tepat
 saat lease mencapai timeout. Perintah `run.sh` menjalankan miner di background,
 menunggu sampai accepted share, lalu mengembalikan prompt terminal. Jupyter dan
 deployment harus tetap hidup.
+
+Bootstrap ini sengaja memakai `curl`, bukan `git`, karena image
+`nosana/pytorch-jupyter` tidak menyediakan command `git`.
 
 Cek status dari terminal yang sama atau terminal baru:
 
