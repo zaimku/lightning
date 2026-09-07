@@ -58,12 +58,16 @@ if [[ "$(uname -m)" != "x86_64" ]]; then
     exit 3
 fi
 
-for required_command in nvidia-smi curl sha256sum grep timeout pgrep; do
+for required_command in nvidia-smi sha256sum grep timeout pgrep; do
     if ! command -v "$required_command" >/dev/null 2>&1; then
         echo "Error: command '$required_command' tidak tersedia di Studio." >&2
         exit 3
     fi
 done
+if ! command -v curl >/dev/null 2>&1 && ! command -v python3 >/dev/null 2>&1; then
+    echo "Error: unduhan membutuhkan curl atau python3." >&2
+    exit 3
+fi
 if [[ "$LOG_TO_STDOUT" == 1 ]] && ! command -v tee >/dev/null 2>&1; then
     echo "Error: command 'tee' diperlukan saat LOG_TO_STDOUT=1." >&2
     exit 3
@@ -145,14 +149,49 @@ binary_is_valid() {
         printf '%s  %s\n' "$PEAKMINER_SHA256" "$MINER_BIN" | sha256sum -c - >/dev/null 2>&1
 }
 
+download_file() {
+    local source_url="$1"
+    local destination="$2"
+
+    if command -v curl >/dev/null 2>&1; then
+        curl -fL --retry 2 --retry-max-time 180 --connect-timeout 20 --max-time 240 \
+            --speed-limit 65536 --speed-time 20 -o "$destination" "$source_url"
+        return
+    fi
+
+    python3 - "$source_url" "$destination" <<'PY'
+import pathlib
+import sys
+import time
+import urllib.request
+
+source_url, destination = sys.argv[1:3]
+target = pathlib.Path(destination)
+last_error = None
+for attempt in range(3):
+    try:
+        request = urllib.request.Request(source_url, headers={"User-Agent": "pearl-nosana-runner"})
+        with urllib.request.urlopen(request, timeout=240) as response, target.open("wb") as output:
+            while chunk := response.read(1024 * 1024):
+                output.write(chunk)
+        raise SystemExit(0)
+    except Exception as exc:
+        last_error = exc
+        target.unlink(missing_ok=True)
+        if attempt < 2:
+            time.sleep(2)
+print(f"download failed: {last_error}", file=sys.stderr)
+raise SystemExit(1)
+PY
+}
+
 download_path="${MINER_BIN}.part"
 if ! binary_is_valid; then
     download_ok=false
     for download_url in "$PEAKMINER_URL" "$PEAKMINER_MIRROR_URL"; do
         rm -f "$download_path"
         echo "Mengunduh PeakMiner v${PEAKMINER_VERSION} dari ${download_url}"
-        if curl -fL --retry 2 --retry-max-time 180 --connect-timeout 20 --max-time 240 \
-            --speed-limit 65536 --speed-time 20 -o "$download_path" "$download_url" &&
+        if download_file "$download_url" "$download_path" &&
             printf '%s  %s\n' "$PEAKMINER_SHA256" "$download_path" | sha256sum -c -; then
             download_ok=true
             break
