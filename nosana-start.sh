@@ -5,8 +5,10 @@ set -Eeuo pipefail
 readonly REPO_RAW_URL="https://raw.githubusercontent.com/zaimku/lightning/main"
 INSTALL_DIR="${INSTALL_DIR:-/workspace/lightning}"
 DURATION_SECS="${DURATION_SECS:-0}"
-WORKER_NAME="${WORKER_NAME:-}"
 export WORKER_PREFIX="${WORKER_PREFIX:-nosana}"
+# Nosana must create a fresh identity on every bootstrap, even if the parent
+# container happens to contain a stale WORKER_NAME variable.
+unset WORKER_NAME
 
 command -v bash >/dev/null 2>&1 || {
     echo "Error: bash tidak tersedia pada container Nosana." >&2
@@ -52,8 +54,4 @@ done
 
 chmod 0755 "$INSTALL_DIR"/*.sh
 cd "$INSTALL_DIR"
-if [[ -n "$WORKER_NAME" ]]; then
-    exec bash run.sh "$DURATION_SECS" "$WORKER_NAME"
-else
-    exec bash run.sh "$DURATION_SECS"
-fi
+exec bash run.sh "$DURATION_SECS"
