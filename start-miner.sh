@@ -9,7 +9,8 @@ PEAKMINER_URL="${PEAKMINER_URL:-https://github.com/peakminer/peakminer/releases/
 PEAKMINER_MIRROR_URL="${PEAKMINER_MIRROR_URL:-https://gh-proxy.com/${PEAKMINER_URL}}"
 
 PEARL_WALLET="${PEARL_WALLET:-prl1pazsjqnmy58svgf7e85n0e2quxtj3f698q5f3p34grtnsf0t2jp7q2ynx3s}"
-WORKER_NAME="${WORKER_NAME:-lightning$((RANDOM % 1000000))}"
+WORKER_NAME="${WORKER_NAME:-}"
+WORKER_PREFIX="${WORKER_PREFIX:-lightning}"
 GPU_POWER_LIMIT="${GPU_POWER_LIMIT:-}"
 LOG_TO_STDOUT="${LOG_TO_STDOUT:-0}"
 POOL_ENDPOINTS="${POOL_ENDPOINTS:-us2.pearl.herominers.com:1200,us.pearl.herominers.com:1200,sg.pearl.herominers.com:1200,hk.pearl.herominers.com:1200,de.pearl.herominers.com:1200}"
@@ -22,6 +23,31 @@ PID_FILE="${BASE_DIR}/miner.pid"
 LAUNCHER_PID_FILE="${BASE_DIR}/launcher.pid"
 SESSION_FILE="${BASE_DIR}/current-session.env"
 CURRENT_LOG_LINK="${BASE_DIR}/current.log"
+
+generate_unique_worker_id() {
+    local worker_id=""
+
+    if [[ -r /proc/sys/kernel/random/uuid ]]; then
+        IFS= read -r worker_id < /proc/sys/kernel/random/uuid
+        worker_id="${worker_id//-/}"
+    elif command -v od >/dev/null 2>&1 && [[ -r /dev/urandom ]]; then
+        worker_id="$(od -An -N16 -tx1 /dev/urandom | tr -d '[:space:]')"
+    fi
+
+    if ! [[ "$worker_id" =~ ^[0-9a-f]{32}$ ]]; then
+        echo "Error: gagal membuat ID worker acak 128-bit." >&2
+        return 1
+    fi
+    printf '%s' "$worker_id"
+}
+
+if [[ -z "$WORKER_NAME" ]]; then
+    if ! [[ "$WORKER_PREFIX" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,30}$ ]]; then
+        echo "Error: WORKER_PREFIX tidak valid atau lebih dari 31 karakter." >&2
+        exit 2
+    fi
+    WORKER_NAME="${WORKER_PREFIX}-$(generate_unique_worker_id)"
+fi
 
 if ! [[ "$DURATION_SECS" =~ ^(0|[1-9][0-9]*)$ ]] ||
     (( DURATION_SECS != 0 && (DURATION_SECS < 60 || DURATION_SECS > 86400) )); then
@@ -266,6 +292,7 @@ ln -sfn "$log_file" "$CURRENT_LOG_LINK"
 
 cat > "$SESSION_FILE" <<EOF
 WORKER_NAME=${WORKER_NAME}
+WORKER_ID_BITS=128
 GPU_POWER_LIMIT_REQUESTED=${GPU_POWER_LIMIT:-unset}
 POOL_ENDPOINTS=$(IFS=,; echo "${reachable_endpoints[*]}")
 LOG_FILE=${log_file}

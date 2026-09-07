@@ -16,6 +16,16 @@ Perintah `run.sh` menjalankan miner di background, menunggu sampai accepted
 share, lalu mengembalikan prompt terminal. Jupyter dan deployment harus tetap
 hidup.
 
+Setiap start/deploy otomatis membuat nama worker baru dengan format:
+
+```text
+nosana-<ID acak 128-bit, 32 karakter heksadesimal>
+```
+
+Contoh: `nosana-6c2cb94181094fbfae441c31a7289dd8`. ID berasal dari generator UUID
+kernel Linux, bukan dari `$RANDOM`, timestamp, hostname, atau nomor urut pendek.
+Peluang dua deployment menghasilkan ID yang sama dapat diabaikan secara praktis.
+
 Bootstrap memakai `python3` bawaan image dan tidak membutuhkan `git` atau
 `curl`. Jika `curl` tersedia pada image lain, skrip tetap dapat memakainya.
 
@@ -60,6 +70,7 @@ langsung mengambil skrip dari GitHub lalu menjalankan PeakMiner di foreground. V
 Nilai durasi runner pada revision adalah `0` (tanpa timer internal). Timeout enam
 jam tetap merupakan batas milik Nosana. Strategy `INFINITE` harus membuat job
 pengganti agar mining berlanjut setelah container lama dihentikan platform.
+Setiap container pengganti memperoleh worker ID baru secara otomatis.
 
 Tanda sehat:
 

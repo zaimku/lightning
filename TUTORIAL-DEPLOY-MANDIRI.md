@@ -89,7 +89,8 @@ Jalankan:
 bash run.sh 86400
 ```
 
-Worker dibuat otomatis dengan prefix `lightning`. Untuk nama tetap:
+Worker dibuat otomatis dengan prefix `lightning` dan ID acak 128-bit baru pada
+setiap start. Untuk nama tetap:
 
 ```bash
 bash run.sh 86400 lightning01
