@@ -3,6 +3,8 @@
 Untuk Nosana, lihat [panduan Nosana](./NOSANA.md) dan
 [`nosana-job.json`](./nosana-job.json). Untuk container Jupyter Nosana yang
 sudah aktif, gunakan bootstrap [`nosana-start.sh`](./nosana-start.sh).
+Gunakan deployment strategy `SIMPLE-EXTEND` dengan satu replica agar lease enam
+jam diperpanjang tanpa overlap job/GPU pengganti dari strategy `INFINITE`.
 
 Paket ini menjalankan PeakMiner untuk Pearl/PRL langsung dari terminal Lightning
 AI Studio. Paket tidak membuat Studio, memilih GPU, memakai kredit, atau mengubah

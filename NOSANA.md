@@ -47,20 +47,28 @@ Hentikan miner:
 cd /workspace/lightning && bash stop.sh
 ```
 
-## Auto-start pada setiap job strategi Infinite
+## Berjalan terus tanpa overlap dua GPU
 
 Perintah terminal di atas hanya berlaku untuk container Revision 1 yang sedang
-aktif. Ketika strategi Infinite mengganti job setelah timeout, container baru
-tidak otomatis mengulang perintah manual.
+aktif. Jangan memakai strategy `INFINITE` untuk akun yang hanya mengizinkan satu
+GPU: strategi itu menjadwalkan job pengganti sebelum job lama mencapai timeout,
+sehingga keduanya dapat overlap.
 
-Untuk auto-start:
+Gunakan strategy `SIMPLE-EXTEND`. Pada setiap timeout enam jam, Nosana
+memperpanjang job yang sama untuk periode enam jam berikutnya, bukan menyiapkan
+job/GPU pengganti.
 
-1. Stop deployment lama agar tidak ada dua job yang memakai GPU/kredit.
-2. Edit job definition dan buat Revision baru.
-3. Ganti seluruh job definition dengan isi [`nosana-job.json`](./nosana-job.json).
-4. Pertahankan GPU market RTX 4090, strategy `INFINITE`, timeout 6 jam, dan satu
-   replica.
-5. Start deployment dan pantau bagian **Logs**.
+Strategy bukan bagian dari `nosana-job.json` dan tidak dapat diganti melalui
+revision job definition. Dokumentasi API Nosana juga tidak menyediakan operasi
+untuk mengubah strategy deployment aktif. Karena itu:
+
+1. Stop deployment `INFINITE` lama.
+2. Tunggu sampai statusnya `STOPPED` dan tidak ada job/replica aktif.
+3. Buat deployment baru agar tidak terjadi overlap.
+4. Pakai isi [`nosana-job.json`](./nosana-job.json) sebagai job definition.
+5. Pilih GPU market RTX 4090, strategy `SIMPLE-EXTEND`, timeout 360 menit, dan
+   satu replica.
+6. Start deployment dan pantau bagian **Logs**.
 
 Revision ini tidak menjalankan Jupyter dan tidak mengekspos port 8888. Container
 langsung mengambil skrip dari GitHub lalu menjalankan PeakMiner di foreground. Variabel
@@ -68,9 +76,15 @@ langsung mengambil skrip dari GitHub lalu menjalankan PeakMiner di foreground. V
 `connected`, `new job`, `accepted`, dan `rejected` terlihat di dashboard.
 
 Nilai durasi runner pada revision adalah `0` (tanpa timer internal). Timeout enam
-jam tetap merupakan batas milik Nosana. Strategy `INFINITE` harus membuat job
-pengganti agar mining berlanjut setelah container lama dihentikan platform.
-Setiap container pengganti memperoleh worker ID baru secara otomatis.
+jam tetap merupakan lease milik Nosana. `SIMPLE-EXTEND` memperpanjang lease itu;
+skrip miner sendiri tidak dan tidak perlu mereset timer Nosana. Miner tetap
+memakai worker ID yang sama selama job/container yang sama diperpanjang. Jika
+deployment benar-benar dimulai ulang dan container baru dibuat, worker ID baru
+akan dibuat otomatis.
+
+Perpanjangan berhenti jika saldo/kredit tidak cukup, deployment dihentikan, atau
+job gagal. Berbeda dari `INFINITE`, `SIMPLE-EXTEND` tidak ditujukan untuk membuat
+replica pengganti sebelum timeout.
 
 Tanda sehat:
 
